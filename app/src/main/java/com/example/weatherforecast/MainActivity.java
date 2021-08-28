@@ -47,6 +47,9 @@ import org.json.JSONObject;
 import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static java.security.AccessController.getContext;
 
@@ -60,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     final int REQUEST_CODE = 101;
 
     String Location_Provider = LocationManager.GPS_PROVIDER;
-    String latitude,longitude;
+    String latitude, longitude;
     TextToSpeech toSpeech;
 
     TextView weatherState, wind, humidity, pressure, temp, min_max, location, lat_lon;
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     FusedLocationProviderClient fusedLocationProviderClient;
 
     LocationManager mLocationManager;
+    Data data;
 
 
     @Override
@@ -78,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
         weatherState = findViewById(R.id.weatherState);
         wind = findViewById(R.id.wind);
-        button=findViewById(R.id.button);
+        button = findViewById(R.id.button);
         humidity = findViewById(R.id.humidity);
         pressure = findViewById(R.id.pressure);
         temp = findViewById(R.id.temp);
@@ -86,10 +90,10 @@ public class MainActivity extends AppCompatActivity {
         location = findViewById(R.id.location);
         lat_lon = findViewById(R.id.lat_lon);
         icon = findViewById(R.id.icon);
-        toSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+        toSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                if(status!=TextToSpeech.ERROR){
+                if (status != TextToSpeech.ERROR) {
                     toSpeech.setLanguage(Locale.UK);
                 }
             }
@@ -97,10 +101,10 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                toSpeech.speak(location.getText().toString(),TextToSpeech.QUEUE_FLUSH,null);
+                toSpeech.speak(location.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
             }
         });
-        fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         Dexter.withContext(this)
                 .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 .withListener(new PermissionListener() {
@@ -122,6 +126,34 @@ public class MainActivity extends AppCompatActivity {
 
                 })
                 .check();
+        Call<Data> call = ApiClient.getApi().getData(latitude,longitude,APP_ID);
+        call.enqueue(new Callback<Data>() {
+            @Override
+            public void onResponse(Call<Data> call, Response<Data> response) {
+                if(response.body()!=null){
+                 data = response.body();
+                Log.d("shivam",data.getName());}
+                else {
+                    Log.d("shivam","bsdk");
+                }
+               // weatherState.setText(data.getMweatherState());
+                //wind.setText(data.getMwind() + "km/h");
+                //humidity.setText(data.getMhumidity());
+                //pressure.setText(data.getMpressure() + "hPa");
+                //temp.setText(data.getMtemp());
+                //temp.setText(data.getMax() + " / " + data.getMin());
+                //location.setText(data.getLocation());
+                //lat_lon.setText(latitude + " / " + longitude);
+                //Picasso.get().load("http://openweathermap.org/img/wn/" + data.getIcon() + "@2x.png").into(icon);
+            }
+
+            @Override
+            public void onFailure(Call<Data> call, Throwable t) {
+                Log.d("myapp", "Something went wrong!" + t.getLocalizedMessage());
+            }
+
+        });
+
 
     }
 
@@ -130,90 +162,44 @@ public class MainActivity extends AppCompatActivity {
     private void getWeatherForCurrentLocation() {
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if(mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        if (mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
                 @Override
-                public void onComplete(@NonNull  Task<Location> task) {
-                    Location location=task.getResult();
-                    if(location!=null){
-                         latitude = String.valueOf(location.getLatitude());
-                         longitude = String.valueOf(location.getLongitude());
-                        RequestParams params =new RequestParams();
-                        params.put("lat",latitude);
-                        params.put("lon",longitude);
-                        params.put("appid",APP_ID);
-                        letsdoSomeNetworking(params);
+                public void onComplete(@NonNull Task<Location> task) {
+                    Location location = task.getResult();
+                    if (location != null) {
+                        latitude = String.valueOf(location.getLatitude());
+                        longitude = String.valueOf(location.getLongitude());
 
-                        Toast.makeText(MainActivity.this, ""+latitude, Toast.LENGTH_SHORT).show();
-                    }else{
-                        LocationRequest locationRequest=new LocationRequest()
-                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                        .setInterval(10000)
-                        .setFastestInterval(1000)
-                        .setNumUpdates(1);
+                        Toast.makeText(MainActivity.this, "" + latitude, Toast.LENGTH_SHORT).show();
+                    } else {
+                        LocationRequest locationRequest = new LocationRequest()
+                                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                                .setInterval(10000)
+                                .setFastestInterval(1000)
+                                .setNumUpdates(1);
 
-                        LocationCallback locationCallback=new LocationCallback(){
+                        LocationCallback locationCallback = new LocationCallback() {
                             @Override
                             public void onLocationResult(LocationResult locationResult) {
-                                Location location1=locationResult.getLastLocation();
-                                 latitude = String.valueOf(location1.getLatitude());
+                                Location location1 = locationResult.getLastLocation();
+                                latitude = String.valueOf(location1.getLatitude());
                                 longitude = String.valueOf(location1.getLongitude());
-                                RequestParams params =new RequestParams();
-                                params.put("lat",latitude);
-                                params.put("lon",longitude);
-                                params.put("appid",APP_ID);
-                                letsdoSomeNetworking(params);
-                               Log.d("shivam","run");
+
                             }
                         };
-                        fusedLocationProviderClient.requestLocationUpdates(locationRequest,locationCallback, Looper.myLooper());
+                        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                     }
                 }
             });
-        }else {
+        } else {
             startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 
         }
 
 
-}
-private  void letsdoSomeNetworking(RequestParams params){
 
-    AsyncHttpClient client=new AsyncHttpClient();
-    Log.d("shivam","run");
-    client.get(WEATHER_URL,params,new JsonHttpResponseHandler(){
+    }
 
-        @Override
-        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-
-            Data data=new Data();
-
-
-            updateUI(data.fromJson(response));
-            Log.d("shivam",data.getLocation());
-            //super.onSuccess(statusCode, headers, response);
-        }
-
-        @Override
-        public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-           //super.onFailure(statusCode, headers, throwable, errorResponse);
-        }
-    });
-
-}
-private  void updateUI(Data data){
-// TextView weatherState, wind, humidity, pressure, temp, min_max, location, lat_lon;
-//    ImageView icon;
-    weatherState.setText(data.getMweatherState());
-    wind.setText(data.getMwind()+"km/h");
-    humidity.setText(data.getMhumidity());
-    pressure.setText(data.getMpressure()+"hPa");
-    temp.setText(data.getMtemp());
-    temp.setText(data.getMax()+" / "+data.getMin());
-    location.setText(data.getLocation());
-    lat_lon.setText(latitude+" / "+longitude);
-    Picasso.get().load("http://openweathermap.org/img/wn/"+data.getIcon()+"@2x.png").into(icon);
-
-}
 }

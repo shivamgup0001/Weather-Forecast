@@ -5,62 +5,43 @@ package com.example.weatherforecast;
         import org.json.JSONException;
         import org.json.JSONObject;
 
+        import java.util.List;
+
 public class Data {
-    private String mweatherState, mwind, mhumidity, mpressure, mtemp, min,max, location,icon;
+    private String name ;
+    Wind wind;
+    Main main;
+    private List<Weather> weather =null;
 
-    public  Data fromJson(JSONObject jsonObject){
-
-        try {
-            Data data =new Data();
-            data.location=jsonObject.getString("name");
-            data.mweatherState=jsonObject.getJSONArray("weather").getJSONObject(0).getString("main");
-            data.mwind=Double.toString(jsonObject.getJSONObject("wind").getDouble("speed"));
-            data.mhumidity=Integer.toString(jsonObject.getJSONObject("main").getInt("humidity"));
-            data.mpressure=Integer.toString(jsonObject.getJSONObject("main").getInt("pressure"));
-            data.mtemp=Double.toString(jsonObject.getJSONObject("main").getDouble("temp")-273);
-            data.min=Double.toString(jsonObject.getJSONObject("main").getDouble("temp_min")-273);
-            data.max=Double.toString(jsonObject.getJSONObject("main").getDouble("temp_max")-273);
-            data.icon=jsonObject.getJSONArray("weather").getJSONObject(0).getString("icon");
-            return data;
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public String getName() {
+        return name;
     }
 
-    public String getMweatherState() {
-        return mweatherState;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getMwind() {
-        return mwind;
+    public Wind getWind() {
+        return wind;
     }
 
-    public String getMhumidity() {
-        return mhumidity;
+    public void setWind(Wind wind) {
+        this.wind = wind;
     }
 
-    public String getMpressure() {
-        return mpressure;
+    public Main getMain() {
+        return main;
     }
 
-    public String getMtemp() {
-        return mtemp+"°C";
+    public void setMain(Main main) {
+        this.main = main;
     }
 
-    public String getMin() {
-        return min+"°C";
+    public List<Weather> getWeather() {
+        return weather;
     }
 
-    public String getMax() {
-        return max+"°C";
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public String getIcon() {
-        return icon;
+    public void setWeather(List<Weather> weather) {
+        this.weather = weather;
     }
 }
